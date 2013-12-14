@@ -9,12 +9,13 @@ keyword
 参考了https://github.com/jmhsieh/aho-corasick。
                                        
 典型用法如下：                                      
-  KeywordFilterBuilder builder = new KeywordFilte
-  // 设置关键字                                       
-  builder.setKeywords(Arrays.asList("心情", "哈哈"));
-  // 设置跳过字符                                      
-  builder.setSkipChars(Arrays.asList('*', ' ')); 
+  KeywordFilterBuilder builder = new KeywordFilter();
+  // 设置关键词 
+  builder.setKeywords(Arrays.asList("心情", "哈哈"));   
+ // 设置跳过字符   
+  builder.setSkipChars(Arrays.asList('*', ' '));   
   final KeywordFilter filter = builder.build();  
+ 
                                                  
   // 统计关键字出现次数, 下例中返回2.                          
   filter.count("老龙恼怒闹老农，老农恼怒闹老龙。", "老龙");        
