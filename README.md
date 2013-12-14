@@ -1,7 +1,8 @@
 keyword
 =======
 
-关键字过滤、替换、高亮、统计算法
+关键字过滤、替换、高亮、统计算法.
+对1万字的文章、1000字的关键字进行筛选，一秒内可执行2000次。
 
 学习AC自动机算法写的代码。
 不依赖其它第三方工具库。
@@ -21,9 +22,9 @@ keyword
                                                  
   // 替换关键字, 下例中返回"买彩票中奖了，呵呵".                    
   filter.replace("买彩票中奖了，哈哈", new ReplaceStrategy
-  	public String replaceWith(String keywords) {
- 		return "呵呵";                            
- 	}                                           
+      public String replaceWith(String keywords) {
+             return "呵呵";                            
+      }                                           
   });                                            
                                                  
   // 判断是否包含关键字, 下例中返回true, 因为包含"心情".             
