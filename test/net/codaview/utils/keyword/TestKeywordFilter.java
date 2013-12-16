@@ -4,8 +4,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.junit.Assert;
@@ -183,11 +183,13 @@ public class TestKeywordFilter {
 		Assert.assertEquals(0, filter.count(text2, "毛毯"));
 	}
 	
-	@Test(timeout = 1500)
+	@Test(timeout = 2500)
 	public void testLargeText() throws IOException {
 		// 临时创建一个唯一的关键词
-		final String uniqueWord = "不是关键词的关键词" + System.currentTimeMillis();
-		keywords.add(uniqueWord);
+		final String uniqueWordHead = "关键词2" + System.currentTimeMillis();
+		keywords.add(0, uniqueWordHead);
+		final String uniqueWordTail = "关键词1" + System.currentTimeMillis();
+		keywords.add(uniqueWordTail);
 		// 构建过滤器
 		KeywordFilterBuilder builder = new KeywordFilterBuilder();
 		builder.setKeywords(keywords);
@@ -196,29 +198,31 @@ public class TestKeywordFilter {
 		
 		Assert.assertTrue(keywords.size() > 1000);
 		Assert.assertTrue(text.length() > 10000);
-		Assert.assertTrue("之前不包含临时创建的关键词", text.indexOf(uniqueWord) == -1);
+		Assert.assertTrue("之前不包含临时创建的关键词", text.indexOf(uniqueWordTail) == -1);
 
 		// 替换
 		final ReplaceStrategy hightlightStrategy = new ReplaceStrategy() {
 			@Override
 			public String replaceWith(String keyword) {
-				return "<font color='red'>" + keyword + "</font>";
+				return "<b>" + keyword + "</b>";
 			}
 		};
+		
 		String result = "";
+		String text = uniqueWordHead + this.text + uniqueWordTail;
 		for (int i = 0; i < 2000; i++) {
-			result = filter.replace(text + uniqueWord, hightlightStrategy);
+			result = filter.replace(text, hightlightStrategy);
 		}
 		
-		final String hightlight = "<font color='red'>" + uniqueWord + "</font>";
-		Assert.assertTrue("替换成功",  result.indexOf(hightlight) > 0);
+		Assert.assertTrue("替换成功", result.indexOf("<b>" + uniqueWordHead + "</b>") > -1);
+		Assert.assertTrue("替换成功", result.indexOf("<b>" + uniqueWordTail + "</b>") > -1);
 	}
 
 	private List<String> getKeywords(String fileName) throws IOException {
 		InputStream is = this.getClass().getResourceAsStream(fileName);
 		BufferedReader reader = new BufferedReader(new InputStreamReader(is));
 		
-		List<String> keywords = new ArrayList<String>();
+		List<String> keywords = new LinkedList<String>();
 		String line;
 		while ((line = reader.readLine()) != null) {
 			keywords.add(line);

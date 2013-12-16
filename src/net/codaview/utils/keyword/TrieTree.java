@@ -1,7 +1,11 @@
 package net.codaview.utils.keyword;
 
 import java.util.Collection;
+import java.util.Deque;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -37,7 +41,7 @@ public class TrieTree implements KeywordFilter {
 	private Set<Character> skipChars = new HashSet<Character>();
 
 	public TrieTree() {
-		this.root = new TrieNode(0);
+		this.root = new TrieNode();
 	}
 
 	/**
@@ -94,12 +98,15 @@ public class TrieTree implements KeywordFilter {
 				continue;
 			}
 			while (last.get(ch) == null) {
-				last = last.getFail();
 				if (last == this.root) {
 					break;
 				}
+				last = last.getFail();
 			}
 			last = last.get(ch);
+			if(null == last) {
+				last = root;
+			}
 			if (!last.getResults().isEmpty()) {
 				preKeyword = last.getResults().iterator().next();
 				cnt++;
@@ -159,13 +166,16 @@ public class TrieTree implements KeywordFilter {
 
 			// 如果当前匹配的字符在trie树中无子节点且不是根节点
 			// 则要通过失败指针去找它的当前节点的子节点
-			while (last.get(ch) == null) {
-				last = last.getFail();
+			while (null != last && last.get(ch) == null) {
 				if (last == this.root) {
 					break;
 				}
+				last = last.getFail();
 			}
 			last = last.get(ch);
+			if (null == last) {
+				last = this.root;
+			}
 			if (!last.getResults().isEmpty()) {
 				return new SearchResult(i + 1, last);
 			}
@@ -206,27 +216,6 @@ public class TrieTree implements KeywordFilter {
 		return cnt;
 	}
 
-	// 这个方法暂时没用到
-	SearchResult continueSearchWithoutSkip(char[] text, SearchResult lastResult) {
-		TrieNode last = lastResult.getLastMatchedNode();
-		for (int i = lastResult.getLastIndex(); i < text.length; i++) {
-			char ch = text[i];
-			// 如果当前匹配的字符在trie树中无子节点且不是根节点
-			// 则要通过失败指针去找它的当前节点的子节点
-			while (last.get(ch) == null) {
-				last = last.getFail();
-				if (last == this.root) {
-					break;
-				}
-			}
-			last = last.get(ch);
-			if (!last.getResults().isEmpty()) {
-				return new SearchResult(i + 1, last);
-			}
-		}
-		return null;
-	}
-
 	/**
 	 * <pre>
 	 * 构造失败指针的过程概括起来就一句话：设这个节点上的字母为x，沿着他父亲的失败指针走，直到走到一个节点，他的儿子中也有字母为x的节点。
@@ -237,19 +226,12 @@ public class TrieTree implements KeywordFilter {
 	 * </pre>
 	 */
 	private void buildFailPath() {
-		Queue<TrieNode> nodes = new Queue<TrieNode>();
-		for (char ch = 0; ch < 256; ch++) {
-			TrieNode child = this.root.get(ch);
-			if (child != null) {
-				child.setFail(this.root);
-				nodes.add(child);
-			}
-		}
+		Deque<TrieNode> nodes = new LinkedList<TrieNode>();
 		// 第二层要特殊处理，将这层中的节点的失败路径直接指向父节点(也就是根节点)。
-		for (char key = 0; key < 256; key++) {
-			if (this.root.get(key) == null) {
-				this.root.put(key, this.root);
-			}
+		for (char ch : this.root.keys()) {
+			TrieNode child = this.root.get(ch);
+			child.setFail(this.root);
+			nodes.add(child);
 		}
 
 		while (!nodes.isEmpty()) {
@@ -263,10 +245,15 @@ public class TrieTree implements KeywordFilter {
 				nodes.add(child);
 
 				r = r.getFail();
-				while (r.get(ch) == null) {
+				while (null != r && r.get(ch) == null) {
 					r = r.getFail();
 				}
-				child.setFail(r.get(ch));
+				if(null == r) {
+					child.setFail(this.root);
+				} else {
+					child.setFail(r.get(ch));
+				}
+				
 			}
 		}
 	}
@@ -284,17 +271,10 @@ public class TrieTree implements KeywordFilter {
  */
 class TrieNode {
 
-	private static final int THRESHOLD_TO_USE_SPARSE = 3;
-
 	/**
 	 * 子节点
 	 */
-	private CharNodeMap children;
-
-	/**
-	 * 节点深度
-	 */
-	private int depth;
+	private Map<Character, TrieNode> children;
 
 	/**
 	 * 失败指针
@@ -306,13 +286,8 @@ class TrieNode {
 	 */
 	private Set<String> results = new HashSet<String>();
 
-	public TrieNode(int depth) {
-		this.depth = depth;
-		if (depth > THRESHOLD_TO_USE_SPARSE) {
-			this.children = new LinkedCharMap();
-		} else {
-			this.children = new ArrayCharMap();
-		}
+	public TrieNode() {
+		this.children = new LinkedHashMap<Character, TrieNode>();
 	}
 
 	/**
@@ -335,7 +310,7 @@ class TrieNode {
 			return child;
 		}
 
-		TrieNode next = new TrieNode(this.depth + 1);
+		TrieNode next = new TrieNode();
 		this.children.put(ch, next);
 		return next;
 	}
@@ -349,7 +324,13 @@ class TrieNode {
 	}
 
 	public char[] keys() {
-		return this.children.keys();
+		char[] result = new char[children.size()];
+		int i = 0;
+		for (Character c : children.keySet()) {
+			result[i] = c;
+			i++;
+		}
+		return result;
 	}
 
 	public TrieNode getFail() {
