@@ -252,6 +252,7 @@ public class TrieTree implements KeywordFilter {
 					child.setFail(this.root);
 				} else {
 					child.setFail(r.get(ch));
+					r.getResults().addAll(r.get(ch).getResults());
 				}
 				
 			}
