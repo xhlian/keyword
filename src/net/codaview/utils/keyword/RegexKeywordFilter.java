@@ -41,7 +41,8 @@ public class RegexKeywordFilter implements KeywordFilter {
 			}
 			patternString = join(regexs, "|");
 		}
-
+		
+		patternString = Pattern.quote(patternString);
 		this.pattern = Pattern.compile(patternString);
 		this.compiled = true;
 	}
