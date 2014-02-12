@@ -56,23 +56,6 @@ public class TestRegexKeywordFilter {
 		Assert.assertEquals("大家的*都很好", filter.replace("大家的心情都很好", ss));
 		Assert.assertEquals("大家的心都很好", filter.replace("大家的心都很好", ss));
 	}
-	
-	@Test
-	public void testSpecialLetter() {
-		RegexKeywordFilter filter = new RegexKeywordFilter();
-		filter.add(Arrays.asList("心(情"));
-		filter.compile();
-
-		final ReplaceStrategy ss = new ReplaceStrategy() {
-			@Override
-			public String replaceWith(String keywords) {
-				return "*";
-			}
-		};
-
-		Assert.assertEquals("大家的*都很好", filter.replace("大家的心(情都很好", ss));
-	}
-
 
 	@Test
 	public void testSamePrefixReplace() {
